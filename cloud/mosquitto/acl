@@ -1,0 +1,11 @@
+user planter-001
+topic write planter/planter-001/telemetry
+topic write planter/planter-001/ack
+topic write planter/planter-001/status
+topic read planter/planter-001/command
+
+user cloud
+topic read planter/planter-001/telemetry
+topic read planter/planter-001/ack
+topic read planter/planter-001/status
+topic write planter/planter-001/command

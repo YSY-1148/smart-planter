@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="zh-CN">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>种植机控制台</title>
+<style>
+:root{font-family:system-ui,sans-serif;color:#173b30;background:#f1f5ef}*{box-sizing:border-box}body{margin:0}main{max-width:1160px;margin:auto;padding:32px 24px}header{display:flex;justify-content:space-between;gap:16px;align-items:center;margin-bottom:28px}h1{font-size:28px;margin:0 0 6px}p{color:#587267;margin:6px 0;line-height:1.6}.tag{border-radius:20px;background:#e2e9df;padding:7px 14px;font-size:13px}.online{background:#d0efdd;color:#195535}.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}.card,section{background:white;border:1px solid #dce5d8;border-radius:16px;padding:22px}.value{font-size:34px;font-weight:650;margin-top:10px}.unit{font-size:15px;font-weight:400;color:#6c8275}.columns{display:grid;grid-template-columns:1.35fr 1fr;gap:16px;margin:18px 0}h2{font-size:17px;margin:0 0 16px}label{display:block;font-size:13px;margin-bottom:12px;color:#4a6555}input{width:100%;border:1px solid #ccd9c8;border-radius:7px;padding:10px;margin-top:5px;font:inherit;color:#173b30}button{border:0;border-radius:8px;padding:11px 16px;background:#1e6848;color:white;cursor:pointer;font:inherit}button.secondary{background:#e8eee5;color:#274b37}button:disabled{opacity:.5;cursor:wait}.row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}.grid2{display:grid;grid-template-columns:1fr 1fr;gap:0 14px}.notice{background:#fbf4df;color:#745915;padding:12px 16px;border-radius:10px;margin:14px 0;font-size:13px}.outputs{display:flex;gap:9px;flex-wrap:wrap}.chip{background:#f0f3ed;padding:8px 12px;border-radius:8px;font-size:13px}.on{background:#d6efdf}.small{font-size:12px}canvas{width:100%;height:190px;display:block}table{width:100%;border-collapse:collapse;font-size:12px}td,th{text-align:left;padding:10px 6px;border-bottom:1px solid #edf1ea}#message{min-height:22px;white-space:pre-wrap;color:#9a431c}#auth{max-width:430px;margin:50px auto}#dashboard[hidden],#auth[hidden]{display:none}@media(max-width:800px){.cards{grid-template-columns:1fr 1fr}.columns{grid-template-columns:1fr}main{padding:22px 14px}.card,section{padding:17px}.value{font-size:29px}}
+</style>
+<main>
+<header><div><h1>智能家用蔬菜种植机</h1><p>环境监测与设备控制</p></div><span class="tag" id="connection">尚未连接</span></header>
+<div id="auth"><section><h2>连接你的设备</h2><p>输入部署时生成的 API 密钥。</p><label>API 密钥<input id="apiKey" type="password" autocomplete="off"></label><button id="login">进入控制台</button><p id="loginError" class="small"></p></section></div>
+<div id="dashboard" hidden>
+<div class="cards">
+<div class="card">环境温度<div class="value"><span id="temp">—</span><span class="unit"> °C</span></div></div>
+<div class="card">相对湿度<div class="value"><span id="rh">—</span><span class="unit"> %</span></div></div>
+<div class="card">光照强度<div class="value"><span id="lux">—</span><span class="unit"> lx</span></div></div>
+<div class="card">营养液状态<div class="value" id="water">—</div></div>
+</div>
+<div id="alarms" class="notice">等待设备数据</div>
+<div class="columns">
+<section><h2>设备运行状态</h2><div class="outputs" id="outputs"></div><p id="detail" class="small"></p><h2 style="margin-top:24px">最近温湿度</h2><canvas id="chart"></canvas><p class="small">绿色：温度 °C　金色：湿度 %　横轴：最近采样时间</p></section>
+<section><h2>自动调节参数</h2><p class="small">以下为待提交值；设备重启后恢复固件默认值。</p><div class="grid2">
+<label>风扇开启温度 °C<input id="ton" type="number" value="28" step="0.1"></label>
+<label>风扇关闭温度 °C<input id="toff" type="number" value="26" step="0.1"></label>
+<label>补水开启湿度 %<input id="ron" type="number" value="50" step="0.1"></label>
+<label>补水停止湿度 %<input id="roff" type="number" value="70" step="0.1"></label>
+<label>目标光照 lx<input id="targetLux" type="number" value="10000"></label>
+<label>喷雾切换发芽率 %<input id="germThreshold" type="number" value="80" step="0.1"></label>
+</div><button id="config">提交参数</button></section>
+</div>
+<div class="columns">
+<section><h2>手动调试</h2><p class="small">持续时间结束后恢复自动模式。水泵仍遵守缺液、运行时长和冷却限制。</p>
+<div class="grid2"><label>灯光亮度 %<input id="led" type="number" value="30" min="0" max="100"></label><label>持续时间 秒<input id="duration" type="number" value="10" min="1" max="30"></label></div>
+<div class="row" style="margin-bottom:16px"><label><input id="fan" type="checkbox" style="width:auto"> 风扇</label><label><input id="drip" type="checkbox" style="width:auto"> 滴灌</label><label><input id="mist" type="checkbox" style="width:auto"> 喷雾</label><label><input id="refill" type="checkbox" style="width:auto"> 补液</label></div>
+<div class="row"><button id="manual">下发手动控制</button><button class="secondary" id="auto">恢复自动</button><button class="secondary" id="clear">清除补液超时</button></div>
+</section>
+<section><h2>发芽状态联动</h2><p class="small">当前发芽率：<span id="rate">未知</span>。可由上位机识别程序提交，这里可手动验证联动。</p><div class="grid2"><label>已发芽数<input id="germinated" type="number" value="18" min="0"></label><label>种子总数<input id="total" type="number" value="20" min="1"></label></div><button id="germ">提交识别结果</button><p class="small">结果有效期 30 分钟；过期后回到未确认发芽状态。</p></section>
+</div>
+<p id="message"></p>
+<section><h2>最近指令</h2><p class="small">“STM32 已接受”表示通过控制器校验。实际输出以上方运行状态为准。</p><div style="overflow:auto"><table><thead><tr><th>编号</th><th>操作</th><th>状态</th><th>返回码</th></tr></thead><tbody id="commands"></tbody></table></div></section>
+<p class="small" id="updated"></p><button id="logout" class="secondary">退出</button>
+</div>
+</main>
+<script>
+const $=id=>document.getElementById(id);
+let key=sessionStorage.getItem('planter-key')||'', busy=false, active=false;
+async function api(path,body){const r=await fetch(path,{method:body?'POST':'GET',headers:{'Authorization':'Bearer '+key,'Content-Type':'application/json'},body:body?JSON.stringify(body):undefined});const b=await r.json();if(!r.ok)throw new Error(b.error||r.statusText);return b;}
+const value=id=>Number($(id).value);
+const scaled=id=>Math.round(value(id)*10);
+const checked=id=>$(id).checked?1:0;
+const display=x=>x===null||x===undefined?'—':x;
+async function action(body,path='/api/command'){if(busy)return;busy=true;try{const r=await api(path,body);$('message').textContent='指令 '+r.id+' 已发送，正在等待 STM32 确认。';await refresh();}catch(e){$('message').textContent=e.message;}finally{busy=false;}}
+$('config').onclick=()=>action({op:'config',args:[scaled('ton'),scaled('toff'),scaled('ron'),scaled('roff'),value('targetLux'),scaled('germThreshold')]});
+$('manual').onclick=()=>action({op:'manual',args:[value('led'),checked('fan'),checked('drip'),checked('mist'),checked('refill'),value('duration')*1000]});
+$('auto').onclick=()=>action({op:'auto'});$('clear').onclick=()=>action({op:'clear_fault'});
+$('germ').onclick=()=>action({germinated:value('germinated'),total:value('total')},'/api/germination');
+function chart(rows){const canvas=$('chart'),ratio=window.devicePixelRatio||1;canvas.width=canvas.clientWidth*ratio;canvas.height=190*ratio;const c=canvas.getContext('2d');c.scale(ratio,ratio);const w=canvas.clientWidth,h=190,left=30,right=8,top=10,bottom=25;c.strokeStyle='#e5ece1';c.fillStyle='#849580';c.font='11px system-ui';for(let y=0;y<=100;y+=25){const p=top+(100-y)/100*(h-top-bottom);c.beginPath();c.moveTo(left,p);c.lineTo(w-right,p);c.stroke();c.fillText(y,0,p+4);}for(const [field,color]of [['temp_c','#2f7d56'],['humidity_pct','#b69642']]){c.strokeStyle=color;c.lineWidth=2;c.beginPath();let drawing=false;rows.forEach((row,i)=>{if(row[field]===null){drawing=false;return;}const x=left+i/Math.max(1,rows.length-1)*(w-left-right),y=top+(100-row[field])/100*(h-top-bottom);if(drawing)c.lineTo(x,y);else c.moveTo(x,y);drawing=true;});c.stroke();}if(rows.length){c.fillStyle='#849580';c.fillText(new Date(rows[0].received_ms).toLocaleTimeString(),left,h-3);c.textAlign='right';c.fillText(new Date(rows[rows.length-1].received_ms).toLocaleTimeString(),w-right,h-3);}}
+async function refresh(){try{const s=await api('/api/state');const t=s.telemetry;$('connection').textContent=s.device_online?(t&&t.simulation?'模拟设备在线':'设备在线'):'设备离线';$('connection').className='tag'+(s.device_online?' online':'');if(t){$('temp').textContent=display(t.temp_c);$('rh').textContent=display(t.humidity_pct);$('lux').textContent=display(t.lux);$('water').textContent=(t.alarms&32)?'未知':t.water_low?'缺液':'正常';$('rate').textContent=t.germination_pct===null?'未知':t.germination_pct+'%';const labels={led_pct:'灯光',fan:'风扇',drip:'滴灌',mist:'喷雾',refill:'补液'};$('outputs').replaceChildren(...Object.entries(t.outputs).map(([k,v])=>{const el=document.createElement('span');el.className='chip'+(v?' on':'');el.textContent=labels[k]+' '+(k==='led_pct'?v+'%':v?'开':'关');return el;}));$('detail').textContent='模式：'+(t.mode==='auto'?'自动':'手动')+' · 运行 '+t.uptime_s+' 秒 · 启动编号 '+t.boot;$('updated').textContent='最近收到数据：'+new Date(t.received_ms).toLocaleString();const reasons=[[1,'环境数据过期'],[2,'温湿度读取失败'],[4,'光照读取失败'],[8,'营养液不足'],[16,'补液超时，需检查后清除'],[32,'液位状态无效'],[64,'发芽率未确认']].filter(([b])=>t.alarms&b).map(([,name])=>name);$('alarms').textContent=reasons.length?reasons.join('；'):'设备状态正常';}const states={sent:'等待确认',accepted:'STM32 已接受',rejected:'已拒绝',expired:'确认超时',publish_failed:'发送失败'};const names={1:'参数设置',2:'手动控制',3:'自动模式',4:'发芽率',5:'清除故障'};$('commands').replaceChildren(...s.commands.map(row=>{const tr=document.createElement('tr');for(const v of [row.id,names[row.op],states[row.state],row.ack_code===null?'—':row.ack_code+' / '+row.ack_stage]){const td=document.createElement('td');td.textContent=v;tr.append(td);}return tr;}));chart(await api('/api/history?limit=120'));}catch(e){$('connection').textContent='连接失败';$('connection').className='tag';$('message').textContent=e.message;}}
+async function login(){key=$('apiKey').value||key;try{await api('/api/state');sessionStorage.setItem('planter-key',key);$('auth').hidden=true;$('dashboard').hidden=false;active=true;await refresh();}catch(e){$('loginError').textContent=e.message;}}
+$('login').onclick=login;$('apiKey').addEventListener('keydown',e=>{if(e.key==='Enter')login();});$('logout').onclick=()=>{sessionStorage.removeItem('planter-key');key='';active=false;$('apiKey').value='';$('auth').hidden=false;$('dashboard').hidden=true;};
+setInterval(()=>{if(active)refresh();},2000);if(key)login();
+</script>
+</html>

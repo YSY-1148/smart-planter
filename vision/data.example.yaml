@@ -1,0 +1,7 @@
+path: /absolute/path/to/dataset
+train: images/train
+val: images/val
+test: images/test
+names:
+  0: alive
+  1: dormant

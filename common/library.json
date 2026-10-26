@@ -1,0 +1,1 @@
+{"name":"PlanterCommon","version":"1.0.0","build":{"srcDir":".","includeDir":".","srcFilter":["+<protocol.c>","+<planter.c>"]}}
