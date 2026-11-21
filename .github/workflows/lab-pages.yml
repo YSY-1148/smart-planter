@@ -1,0 +1,56 @@
+name: 青禾实验室 · Build and publish
+on:
+  push:
+    branches: [main, qinghe-pages]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: qinghe-pages-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+      - name: Install C and DOM test tools
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y clang lld
+          npm install --prefix lab/.qa --no-audit --no-fund jsdom@26.1.0
+      - name: Build original C core for the browser
+        run: python lab/build_pages.py --output _site
+      - name: Verify native controller and browser equivalence
+        run: |
+          python lab/test_lab.py
+          python lab/browser_fixtures.py
+          node lab/test_browser.cjs _site
+          python lab/verify_study.py --node node --legacy
+      - uses: actions/upload-artifact@v4
+        with:
+          name: qinghe-verified-site
+          path: _site
+          include-hidden-files: true
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: _site
+  deploy:
+    if: github.ref == 'refs/heads/main'
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/configure-pages@v5
+      - uses: actions/deploy-pages@v4
+        id: deployment

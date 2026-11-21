@@ -1,5 +1,9 @@
 # 智能种植系统
 
+**在线学习：[打开青禾实验室](https://ysy-1148.github.io/smart-planter/)**。Mac、Windows 均可直接用浏览器学习入门课程、专题 17–64、接线模型和面试资料；控制实验使用原项目 C 代码编译的 WebAssembly，无需启动本地服务器。网页实验采用模拟输入，不连接实际硬件。
+
+使用说明、Mac 本地运行和学习进度说明见 [实验室说明](lab/README-GITHUB.md)。
+
 本项目将环境采集、自动控制、远程监控和种子发芽识别连接起来：STM32 根据温湿度、光照和液位控制种植环境，上位机通过图像识别计算发芽率，STM32 再结合发芽率选择滴灌或喷雾。
 
 当前参考实现采用 STM32F407 + FreeRTOS、ESP32、Mosquitto、Python 和 SQLite，视觉模块采用 Simplify YOLOv5s。

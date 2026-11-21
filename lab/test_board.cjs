@@ -1,0 +1,40 @@
+// Pure peripheral model invariants, independent of the UI and server.
+const fs=require('node:fs'),path=require('node:path'),vm=require('node:vm'),assert=require('node:assert/strict');
+const scope={window:{}};vm.createContext(scope);
+vm.runInContext(fs.readFileSync(path.join(__dirname,'web/board-models.js'),'utf8'),scope);
+const modules=scope.window.BoardModels.modules;
+const make=(id,values={})=>modules[id].make({...Object.fromEntries(modules[id].controls.map(c=>[c.key,c.value])),...values});
+const last=frames=>frames[frames.length-1];
+let sourceChecks=0;
+for(const id of Object.keys(modules))for(const frame of make(id)){
+  const source=fs.readFileSync(path.join(__dirname,'..',frame.file),'utf8');
+  assert.ok(source.includes(frame.anchor),id+': '+frame.anchor);sourceChecks++;
+  assert.ok(frame.active.every(node=>modules[id].nodes.some(n=>n[0]===node)));
+  for(const row of frame.wave||[])assert.ok(row.segments.every(s=>[0,1].includes(s.level)&&s.duration>0));
+}
+assert.equal(make('pwm')[0].values.频率,'1000.00 Hz');
+assert.equal(make('pwm',{psc:167})[0].values.频率,'500.00 Hz');
+assert.equal(make('pwm',{arr:1999})[0].values.频率,'500.00 Hz');
+assert.ok(make('pwm',{duty:0}).filter(f=>'PB6' in f.values).every(f=>f.values.PB6==='LOW'));
+assert.ok(make('pwm',{duty:100}).filter(f=>'PB6' in f.values).every(f=>f.values.PB6==='HIGH'));
+assert.equal(last(make('gpio',{mode:'od',level:1,pull:false})).values.引脚电平,'Z / 不确定');
+assert.equal(last(make('gpio',{mode:'od',level:1,pull:true})).values.引脚电平,1);
+assert.equal(last(make('gpio',{mode:'pp',level:0,pull:true})).values.引脚电平,0);
+assert.equal(last(make('i2c',{raw:4660})).values.lux,3883);
+assert.equal(last(make('i2c',{nack:true})).values.SENSOR_LIGHT,0);
+assert.equal(last(make('dht')).values.temp10,250);
+assert.equal(last(make('dht',{width:45})).values.humidity10,600);
+assert.equal(last(make('dht',{width:46})).values.校验,'失败');
+assert.equal(last(make('dht',{width:120})).values.ok,false);
+assert.deepEqual(Array.from(make('uart',{byte:150}).filter(f=>/^D\d$/.test(f.values.阶段)),f=>f.values.TX),[0,1,1,0,1,0,0,1]);
+assert.equal(last(make('dma',{count:512})).values.返回,false);
+assert.equal(last(make('dma',{count:520})).values.模型追踪序号,513);
+assert.equal(make('irq',{priority:3})[1].values.被屏蔽,false);
+assert.equal(make('irq',{priority:5})[1].values.被屏蔽,true);
+assert.equal(make('irq',{priority:15})[1].values.被屏蔽,true);
+assert.equal(make('queue').find(f=>f.values.ACK===9).values.已占用,8);
+assert.equal(last(make('watchdog')).values.复位请求,true);
+assert.equal(last(make('watchdog',{stall:1000})).values.复位请求,false);
+assert.equal(make('watchdog')[0].values.理想超时,'4002.000 ms');
+assert.equal(make('watchdog',{lsi:40000})[0].values.理想超时,'3201.600 ms');
+console.log(`PASS ${sourceChecks} source anchors across 10 models; PWM, GPIO, I2C, DHT, UART, DMA, IRQ, queue and watchdog boundary checks`);

@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>青禾实验室 · 种菜机交互仿真</title>
+<script src="browser-engine.js" defer></script><script src="lab-api.js" defer></script>
+<script src="planter-view.js" defer></script>
+<link rel="stylesheet" href="project-learning.css">
+<link rel="stylesheet" href="style.css"><link rel="stylesheet" href="circuit-bench.css"><script src="question-bank.js" defer></script><script src="board-models.js" defer></script><script src="board-ui.js" defer></script><script src="circuit-hardware.js" defer></script><script src="circuit-model.js" defer></script><script src="circuit-guides.js" defer></script><script src="circuit-extra.js" defer></script><script src="circuit-bench.js" defer></script><script src="learning-models.js" defer></script><script src="curriculum-foundations.js" defer></script><script src="curriculum-systems.js" defer></script><script src="curriculum-ui.js" defer></script><script src="app.js" defer></script>
+</head>
+<body>
+<aside class="sidebar">
+  <a class="brand" href="index.html" aria-label="青禾实验室首页"><span class="brand-mark">禾</span><span>青禾实验室<small>PLANTER LAB / 01</small></span></a>
+  <div class="nav-label">从程序出发 · 交互课程</div>
+  <a href="study.html" class="bank-button" style="display:block;text-decoration:none;margin-bottom:12px;font-size:14px">今天学透 17–64 · 项目实验与公司面经</a>
+  <button id="curriculum-open" class="bank-button">150 个专题 · 学习与接线 ↗</button>
+  <nav id="lesson-nav" aria-label="课程列表"></nav>
+  <div class="sidebar-bottom"><button id="bank-btn" class="bank-button">160 题 · 学习路线 ↗</button><span class="live-dot"></span> 本地 C 控制核心<div>STM32F407 · ESP32 · FreeRTOS</div><button id="scope-btn" class="text-btn">仿真范围与使用说明 ↗</button></div>
+</aside>
+<main>
+  <header class="topbar"><div><span class="eyebrow">嵌入式 · 可观察的控制系统</span><h1 id="lesson-title">温度与滞回</h1><p id="lesson-subtitle">从一个判断，看到整台机器的变化。</p></div><div class="header-status"><span id="connection" class="badge">连接控制核心…</span><div class="clock" id="clock">00:00.0 <small>模拟时间</small></div></div></header>
+  <div class="toolbar"><div class="toolbar-group"><button id="run" class="primary">▶ 连续运行</button><button id="tick">+ 100 ms</button><button id="two-seconds">+ 2 s</button><label class="compact">演示速度 <select id="speed"><option value="1">1×</option><option value="5">5×</option><option value="20">20×</option></select></label><label class="compact follow-toggle"><input id="follow-running-code" type="checkbox" checked>代码跟随（慢放）</label></div><div class="toolbar-group"><span id="run-state" class="muted">已暂停 · 输入可修改</span><button id="reset">↺ 重置本课</button></div></div>
+  <div id="error" class="error" role="alert" hidden></div>
+  <div class="workspace">
+    <section class="simulation-panel panel">
+      <div class="panel-heading"><div><span class="section-index">01 / SYSTEM</span><h2>虚拟种菜机</h2></div><span id="mode" class="badge green">自动控制</span></div>
+      <div class="scene" id="scene">
+      <svg viewBox="0 0 700 440" role="img" aria-labelledby="scene-title scene-desc">
+        <title id="scene-title">种菜机与传感器的实时动画</title><desc id="scene-desc">补光灯、风扇、滴灌、喷雾和补液根据原 C 程序输出变化。点击器件可定位相关代码。</desc>
+        <defs><linearGradient id="glass" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#e9f6ed"/><stop offset="1" stop-color="#f9fcf9"/></linearGradient><linearGradient id="water-fill" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#7cc6cf"/><stop offset="1" stop-color="#388f9e"/></linearGradient><linearGradient id="light-cone" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#f9df8a" stop-opacity=".65"/><stop offset="1" stop-color="#f9df8a" stop-opacity="0"/></linearGradient><pattern id="dots" width="18" height="18" patternUnits="userSpaceOnUse"><circle cx="2" cy="2" r=".7" fill="#d6dfd8"/></pattern></defs>
+        <rect width="700" height="440" fill="url(#dots)"/>
+        <ellipse cx="354" cy="414" rx="222" ry="13" fill="#dce5df"/>
+        <rect x="154" y="34" width="370" height="358" rx="20" fill="#d5e2d8" stroke="#9fb5a7"/>
+        <rect x="168" y="45" width="342" height="321" rx="12" fill="url(#glass)" stroke="#b9cec0"/>
+        <rect x="154" y="366" width="370" height="34" rx="10" fill="#315d49"/>
+        <rect x="176" y="400" width="23" height="14" rx="3" fill="#284e3c"/><rect x="479" y="400" width="23" height="14" rx="3" fill="#284e3c"/>
+        <text x="182" y="389" fill="#e7f5eb" font-size="12" letter-spacing="3">QINGHE / GROW STATION</text>
+        <g id="lamp-part" class="svg-click" role="button" tabindex="0" aria-label="补光灯 PWM，查看驱动代码" data-component="lamp">
+          <path id="lamp-glow" d="M209 74 L469 74 L505 260 L172 260 Z" fill="url(#light-cone)" opacity="0"/>
+          <rect x="209" y="59" width="260" height="17" rx="5" fill="#4d6457"/><rect id="lamp-strip" x="219" y="68" width="240" height="5" rx="2" fill="#b8c5b9"/>
+          <path d="M221 59V45 M457 59V45" stroke="#8ba294" stroke-width="3"/>
+        </g>
+        <g class="svg-click" role="button" tabindex="0" aria-label="DHT11 温湿度传感器，查看采样代码" data-component="dht"><rect x="184" y="105" width="25" height="38" rx="4" fill="#5b95b6"/><path d="M190 113h13m-13 7h13m-13 7h13m-13 7h13" stroke="#d5eef6" stroke-width="2"/><path d="M192 143v11m9-11v11" stroke="#9e8d55" stroke-width="2"/></g>
+        <g class="svg-click" role="button" tabindex="0" aria-label="BH1750 光照传感器，查看 I2C 代码" data-component="light"><rect x="464" y="104" width="30" height="22" rx="3" fill="#3d7a5b"/><rect x="475" y="109" width="9" height="9" fill="#172b25"/><circle cx="470" cy="114" r="2" fill="#dbd28e"/></g>
+        <g class="svg-click" role="button" tabindex="0" aria-label="风扇，查看滞回控制" data-component="fan"><rect x="445" y="158" width="53" height="53" rx="9" fill="#d8e4dd" stroke="#8fa99a"/><circle cx="471.5" cy="184.5" r="20" fill="#f1f7f2" stroke="#afc3b4"/><g id="fan-blades"><path d="M471 184 C447 176 457 159 468 166Z M472 184 C480 160 497 170 489 181Z M472 185 C496 193 486 210 475 202Z M471 185 C463 209 446 199 454 188Z" fill="#548069"/></g><circle cx="472" cy="185" r="5" fill="#315d49"/></g>
+        <g id="plants">
+          <g transform="translate(248 237)"><path d="M0 0V-44" stroke="#648652" stroke-width="4"/><path d="M0-13C-55-5-53-55-5-34C-15-70 30-65 5-26C44-58 56-10 0-13" fill="#5f9567"/><path d="M-24-27L0-14L24-31" fill="none" stroke="#b2cea0" stroke-width="1.5"/><path d="M-25 0h50l-7 34h-36Z" fill="#c49b76"/><ellipse cy="0" rx="25" ry="6" fill="#6a5746"/></g>
+          <g transform="translate(339 237)"><path d="M0 0V-55" stroke="#648652" stroke-width="4"/><path d="M0-15C-60-7-51-62-7-38C-21-83 35-73 6-29C53-63 60-9 0-15" fill="#477c54"/><path d="M-24-29L0-16L27-35" fill="none" stroke="#a9c995" stroke-width="1.5"/><path d="M-25 0h50l-7 34h-36Z" fill="#c49b76"/><ellipse cy="0" rx="25" ry="6" fill="#6a5746"/></g>
+          <g transform="translate(421 237)"><path d="M0 0V-38" stroke="#648652" stroke-width="4"/><path d="M0-12C-45-6-43-49-5-29C-17-65 28-59 5-23C40-51 49-8 0-12" fill="#77a477"/><path d="M-23 0h46l-6 34h-34Z" fill="#c49b76"/><ellipse cy="0" rx="23" ry="6" fill="#6a5746"/></g>
+        </g>
+        <rect x="187" y="276" width="303" height="10" rx="3" fill="#7c9a86"/>
+        <path d="M202 285V352H285M473 285V352H392" fill="none" stroke="#a8bdae" stroke-width="3"/>
+        <path class="pipe" d="M291 343H215V166H427" fill="none" stroke="#b3c8cf" stroke-width="5"/>
+        <path class="pipe flow drip-flow" d="M291 343H215V166H427" fill="none" stroke="#3294ad" stroke-width="3"/>
+        <g id="drips" fill="#439cb4"><ellipse cx="248" cy="180" rx="2" ry="5"/><ellipse cx="338" cy="193" rx="2" ry="5"/><ellipse cx="421" cy="180" rx="2" ry="5"/></g>
+        <path d="M383 343H453V145H325" fill="none" stroke="#b9cfcb" stroke-width="4"/>
+        <path class="pipe flow mist-flow" d="M383 343H453V145H325" fill="none" stroke="#6db9b3" stroke-width="2.5"/>
+        <g id="mist" fill="#88b9bd"><circle cx="295" cy="154" r="3"/><circle cx="310" cy="173" r="4"/><circle cx="324" cy="155" r="3"/><circle cx="343" cy="176" r="3"/><circle cx="357" cy="159" r="4"/><circle cx="333" cy="195" r="3"/></g>
+        <g class="svg-click" role="button" tabindex="0" aria-label="营养液箱与数字液位，查看保护代码" data-component="water"><rect x="276" y="300" width="124" height="58" rx="7" fill="#e6f1ed" stroke="#96b7ac"/><path id="tank-water" d="M279 322 Q310 317 341 322T397 322V350Q397 355 391 355H285Q279 355 279 350Z" fill="url(#water-fill)"/><text x="338" y="317" text-anchor="middle" class="svg-small">营养液箱</text><rect x="395" y="319" width="9" height="15" rx="3" fill="#648277"/><text x="339" y="346" text-anchor="middle" id="tank-label" fill="#fff" font-size="12">液位足</text></g>
+        <g class="svg-click" role="button" tabindex="0" aria-label="滴灌泵，查看状态机" data-component="pump"><circle cx="252" cy="342" r="15" fill="#e6eeea" stroke="#93aa9b"/><circle id="drip-pump" cx="252" cy="342" r="8" fill="#9eafa5"/><text x="252" y="368" text-anchor="middle" class="svg-small">滴灌</text></g>
+        <g class="svg-click" role="button" tabindex="0" aria-label="喷雾泵，查看状态机" data-component="pump"><circle cx="428" cy="342" r="15" fill="#e6eeea" stroke="#93aa9b"/><circle id="mist-pump" cx="428" cy="342" r="8" fill="#9eafa5"/><text x="428" y="368" text-anchor="middle" class="svg-small">喷雾</text></g>
+        <rect x="561" y="288" width="64" height="72" rx="9" fill="#dfebeb" stroke="#a3bab6"/><rect x="566" y="317" width="54" height="36" rx="5" fill="#7cb8bf"/><rect x="580" y="280" width="25" height="8" rx="2" fill="#b3c6c0"/><text x="593" y="308" text-anchor="middle" class="svg-small">储备液</text>
+        <path d="M561 338H515V350H401" stroke="#adbdc0" stroke-width="5" fill="none"/><path class="flow refill-flow" d="M561 338H515V350H401" stroke="#3093aa" stroke-width="3" fill="none"/>
+        <g class="svg-click" role="button" tabindex="0" aria-label="补液泵，查看超时保护" data-component="water"><circle cx="530" cy="338" r="13" fill="#e2eeeb" stroke="#9bb2a7"/><circle id="refill-pump" cx="530" cy="338" r="7" fill="#9eafa5"/></g>
+        <g class="svg-click" role="button" tabindex="0" aria-label="摄像头与视觉输入，查看发芽率逻辑" data-component="vision"><path d="M532 82h26v22h-26Z" fill="#5c7466"/><circle cx="536" cy="93" r="6" fill="#233c30"/><path d="M558 94h17v34" stroke="#859d8d" stroke-width="4" fill="none"/><text x="556" y="64" class="svg-small">摄像头 / 上位机</text></g>
+        <g class="scene-labels"><path d="M72 116H181"/><text x="36" y="98">DHT11</text><text x="36" y="133" id="svg-temp">25.0°C / 60%</text><path d="M495 115H625"/><text x="540" y="102">BH1750</text><text x="540" y="133" id="svg-lux">10000 lx</text><path d="M495 186H625"/><text x="540" y="175">排风扇 / PD12</text><text x="540" y="204" id="svg-fan">关闭</text><path d="M276 328H107"/><text x="35" y="303">数字液位 / PB1</text><text x="35" y="347" id="svg-water">稳定 · 有液</text><text x="209" y="27" id="svg-pwm">补光 / TIM4_CH1 · PWM 0%</text></g>
+      </svg>
+      </div>
+      <div class="board-strip"><div id="stm-board" class="dev-board" data-component="mcu" role="button" tabindex="0" aria-label="STM32F407 开发板，查看主程序"><div class="board-header">STM32F407 <span>DISCOVERY · 示意</span></div><div class="board-body"><div class="board-usb">USB<br>ST-LINK</div><div class="mcu-chip">STM32<br><b>F407</b><small>Cortex-M4</small></div><div class="pin-column"><span data-pin="fan">● PD12 风扇</span><span data-pin="drip">● PD13 滴灌</span><span data-pin="mist">● PD14 喷雾</span><span data-pin="refill">● PD15 补液</span><span data-pin="led">● PB6 PWM</span></div></div><div class="board-footer">3.3 V 配置 · 168 MHz 配置 <span>FreeRTOS</span></div></div><div class="bus-link"><span>UART</span><span class="bus-pulse">⇄</span><small>115200<br>8N1</small></div><div class="esp-board" data-component="esp" role="button" tabindex="0" aria-label="ESP32 网关，查看通信代码"><div class="antenna">▥▥▥</div><b>ESP32</b><small>WROOM</small><span id="wifi-state">Wi-Fi 模型在线</span></div><div class="cloud-mini" data-component="cloud" role="button" tabindex="0" aria-label="云端链路说明"><span>☁</span><b>MQTT</b><small id="cloud-state">链路示意</small></div></div>
+      <div class="outputs" id="outputs"></div>
+      <p class="caption">输出经过 MOSFET / 继电器驱动级连接风扇、水泵与补光灯（功能示意）。水面表示高低状态，不是液量测量。点击器件可跳转代码。</p>
+    </section>
+    <section class="code-panel panel">
+      <div class="panel-heading"><div><span class="section-index">02 / CODE</span><h2>程序正在做什么</h2></div><span class="badge" id="trace-kind">C 运行快照</span></div>
+      <div class="source-select"><select id="source-file" aria-label="源代码文件"></select><span id="source-position">L1</span></div>
+      <div id="code" class="code-view" role="region" aria-label="原始源代码，当前执行行高亮" tabindex="0"></div>
+      <div class="trace-controls"><button id="replay" class="primary">▶ 回放执行</button><button id="next-line">下一代码步 →</button><span id="trace-position">0 / 0</span></div>
+      <div class="explain"><span class="explain-kicker" id="trace-phase">先预测，再运行</span><p id="line-explanation">选择下方的实验步骤，观察同一个温度在不同历史状态下的结果。</p><div id="changed-values" class="changed-values"></div><button id="component-lab" class="text-btn" hidden>进入这个器件的原理实验 →</button></div>
+      <div class="mini-state"><div>采样值 <b id="sample-value">25.0°C</b></div><div>需求变量 <b id="demand-value">false</b></div><div>引脚输出 <b id="pin-value">LOW</b></div></div>
+      <div class="timeline" id="timeline" aria-label="采样与控制周期示意"></div>
+    </section>
+  </div>
+  <section class="experiment panel"><div class="experiment-copy"><span class="section-index">03 / EXPERIMENT</span><h2>跟着程序做实验</h2><p id="concept"></p></div><div class="experiment-actions"><div id="steps" class="steps"></div><button id="experiment-next" class="primary">运行第 1 步 →</button><small id="step-help">每次运行后，可用“下一代码步”同步观察变量与硬件输出。</small></div></section>
+  <section class="panel board-entry"><div><span class="section-index">WIRE / MEASURE / UNDERSTAND · 从外设开始动手</span><h2>把线路接起来，观察种菜机的反应</h2><p>150 个学习专题 · 15 个接线场景 · 100 个排针位置 · 双通道示波器 · 原 C 控制联动。结合江协外设基础、面经与项目逐步学习。</p></div><button id="board-open" class="primary">进入接线与种菜机实验台 ↗</button></section>
+  <section class="panel inputs-panel"><div class="panel-heading"><div><span class="section-index">04 / INPUTS</span><h2>改变外部世界</h2></div><span class="muted">输入改变后，在下一次采样生效</span></div><div class="sliders" id="sliders"></div><div class="toggles" id="toggles"></div><p class="caption">环境联动默认关闭。开启后仅用简化公式演示风扇降温、水泵增湿，不代表真实植物或设备模型。</p></section>
+  <section class="bottom-grid">
+    <div class="panel knowledge"><div class="panel-heading"><div><span class="section-index">05 / UNDERSTAND</span><h2>把现象连接到面试题</h2></div></div><div id="questions"></div></div>
+    <div class="panel"><div class="panel-heading"><div><span class="section-index">06 / EVENTS</span><h2>变化记录</h2></div><span id="event-count" class="badge">0</span></div><div id="events" class="events" role="log" aria-label="仿真事件记录"></div></div>
+  </section>
+  <section class="panel bank-panel"><div class="panel-heading"><div><span class="section-index">07 / ROADMAP</span><h2>160 题学习路线</h2></div><button id="bank-open">展开题目与课程关联 ↗</button></div><p class="caption">80 道公开面经整理 + 80 道深入练习。课程关联表示可以借本项目观察相关概念，不表示已完整仿真该芯片或协议。</p></section>
+  <section class="panel inspect"><div class="inspector-tabs" role="tablist" aria-label="深入观察"><button role="tab" aria-selected="true" data-tab="variables">所有控制变量</button><button role="tab" aria-selected="false" data-tab="config">参数与手动命令</button><button role="tab" aria-selected="false" data-tab="packet">串口帧 / 内存布局</button></div>
+    <div id="variables" class="inspect-content" role="tabpanel"><div class="inspector-heading"><p>Planter 结构体与采样、输出、水泵状态。回放中显示对应时刻的快照。</p><input id="variable-filter" placeholder="搜索变量，例如 fan / started" aria-label="搜索变量"></div><div id="variable-table" class="variable-grid"></div></div>
+    <div id="config" class="inspect-content" role="tabpanel" hidden><div class="config-grid"><form id="config-form"><h3>控制参数 · 通过真实指令校验</h3><div id="config-fields" class="field-grid"></div><button class="primary" type="submit">应用参数</button></form><form id="manual-form"><h3>限时手动控制</h3><label>灯光 % <input name="led" type="number" min="0" max="100" value="50"></label><label>持续秒数 <input name="seconds" type="number" min="1" max="30" value="3"></label><div class="manual-flags"><label><input type="checkbox" name="fan" checked>风扇</label><label><input type="checkbox" name="drip">滴灌</label><label><input type="checkbox" name="mist">喷雾</label><label><input type="checkbox" name="refill">补液</label></div><button type="submit" class="primary">发送手动命令</button><button type="button" id="auto-mode">恢复自动</button><button type="button" id="clear-fault">清除补液故障</button></form><form id="germ-form"><h3>视觉结果注入</h3><label>发芽率 % <input type="number" name="germ" min="0" max="100" value="90"></label><button type="submit">提交识别结果</button><p class="caption">不调用摄像头或 YOLO；仅模拟输入结果。</p></form></div><p class="constants">固定保护参数：环境数据 6500 ms · 发芽结果 1800000 ms · 泵最长 5000 ms · 冷却 60000 ms · 补液最长 20000 ms · 液位稳定 300 ms</p><p id="ack" class="ack">尚未发送命令</p></div>
+    <div id="packet" class="inspect-content" role="tabpanel" hidden><div class="packet-toolbar"><h3>固定 74 字节帧</h3><label><input type="checkbox" id="command-frame"> 查看最后一条命令</label></div><div class="packet-legend"><span>0–1 帧头</span><span>2 版本 / 3 类型</span><span>4–7 序号</span><span>8–71 数据</span><span>72–73 CRC</span></div><div id="hex" class="hex"></div><p id="layout" class="caption"></p></div>
+  </section>
+  <footer>青禾实验室 · 控制逻辑直接来自本项目 C 源码 · 开发板、电气信号和网络为教学示意 · 所有操作仅作用于本地仿真</footer>
+</main>
+<dialog id="chip-lab" aria-labelledby="chip-title">
+  <button id="chip-close" class="dialog-close" aria-label="关闭芯片实验">×</button>
+  <span class="eyebrow">INSIDE STM32 / 芯片内部结构与程序联动</span><h2 id="chip-title">芯片结构与时钟</h2>
+  <p class="chip-boundary">独立的外设教学模型 · 高亮行是模型步骤对应的原程序位置 · 不执行 HAL、真实中断或 MCU 指令，不改变种菜机控制实验。</p>
+  <nav id="chip-tabs" aria-label="芯片原理模块"></nav>
+  <p id="chip-principle"></p>
+  <form id="chip-form"><div id="chip-options"></div><button id="chip-rebuild" type="submit">按这些参数重新演示</button><button id="chip-use-led" type="button">使用种菜机当前补光值</button></form>
+  <div class="chip-workspace">
+    <div class="chip-visual"><div id="chip-diagram"></div><p class="chip-diagram-hint">点击内部模块可跳到它参与的步骤。连接线表示功能关系，非精确电路或芯片版图。</p><div id="chip-wave"></div><div id="chip-memory"></div><div id="chip-values"></div></div>
+    <div class="chip-program"><div class="chip-code-heading"><span id="chip-source"></span><b id="chip-function"></b></div><div id="chip-code" class="code-view" tabindex="0" aria-label="芯片原理步骤对应源码"></div><label class="chip-follow"><input id="chip-follow" type="checkbox" checked>程序跟随当前步骤自动滚动</label><div class="chip-explain"><span>当前步骤 · 结构与程序一起看</span><p id="chip-explanation"></p></div></div>
+  </div>
+  <div class="chip-transport"><button id="chip-play" class="primary">▶ 演示芯片步骤</button><button id="chip-back">← 上一步</button><button id="chip-next">下一步 →</button><button id="chip-reset">回到起点</button><label>速度 <select id="chip-speed"><option value="0.5">0.5×</option><option value="1" selected>1×</option><option value="2">2×</option><option value="4">4×</option></select></label><span id="chip-step-label"></span><input id="chip-scrub" type="range" min="0" max="1" value="0" aria-label="拖动查看芯片实验步骤"></div>
+  <div id="chip-questions"></div><p id="chip-references"></p>
+</dialog>
+<dialog id="question-bank"><button id="close-bank" class="dialog-close" aria-label="关闭题目路线">×</button><span class="eyebrow">160 QUESTIONS / LEARNING PATH</span><h2>让每个知识点回到程序里</h2><p>160 道题已关联到 150 个学习专题，可从每道题进入原理、代码和练习。专题复用原理模型，部分还可进入接线或原 C 实验。面经是候选人的公开回忆，不是官方题库；硬件与电机岗位的题目按方向选学。</p><input id="bank-filter" placeholder="搜索题号或关键词，如 DMA、指针、回绕" aria-label="搜索160道题"><div id="bank-results"></div></dialog>
+<dialog id="scope"><button id="close-scope" class="dialog-close" aria-label="关闭说明">×</button><span class="eyebrow">学习路线与仿真边界</span><h2>从一个判断，走到整个嵌入式系统</h2><p>当前提供 150 个学习专题、45 个共享原理模型、15 个接线场景和 12 个原 C 实验。控制核心、命令校验、CRC 与帧解析执行原项目 C 代码；关键语句加入只读观察回调，源码文件保持原样。</p><div class="scope-grid"><div><h3>接线与种菜机联动</h3><p>连接开发板、电源、传感器、驱动器和示波器，观察引脚信号与代码。运行原 C 控制器后，种菜机按控制输出和本课接线通路呈现风扇、补光、水泵等效果。</p></div><div><h3>原理模型与代码推导</h3><p>外设、调度、通信和控制算法采用局部计算或状态模型。高级专题另外提供代码与推导，未运行完整 CAN 协议栈、FreeRTOS 内核、Linux 驱动或 FOC 系统，也不执行 Cortex-M 指令。</p></div></div><p>代码回放记录已完成的 C 调用中的关键语句，不是暂停 CPU 的调试器。引脚动画在控制函数返回后提交；源代码可以跟随跳转到 app.c 的输出调用。</p><p>物理环境联动、摄像头、云端和芯片外形是教学模型。液位开关不提供百分比；显示的电压、主频是工程配置值。150 个专题不等于 150 套完整芯片仿真。</p><p>每课按“理解原理 → 预测 → 接线或运行模型 → 单步看代码和信号 → 分析种菜机反应 → 联系面试题”进行。学习目录结合江协基础课程路线，明确区分 F103 / 标准库与本项目 F407 / HAL。</p></dialog>
+<dialog id="circuit-bench" aria-labelledby="bench-title">
+  <header class="bench-header"><div><span class="eyebrow">青禾 / 虚拟电子实验台</span><h2 id="bench-title">亲手接线，跟着程序看信号</h2><p id="bench-topic"></p></div><button id="bench-curriculum">查看完整专题路线</button><button id="bench-close" aria-label="关闭接线实验台">关闭 ×</button></header>
+  <div class="bench-toolbar"><label>教学实验 <select id="bench-lessons"></select></label><label>鼠标操作 <select id="bench-mode"><option value="wire">点击两端接线</option><option value="inspect">只查看引脚</option></select></label><button id="bench-example">载入接线示例</button><button id="bench-undo">撤销最后一根线</button><button id="bench-clear">清空本课导线</button><button id="bench-package-open">放大芯片 100 脚</button><label class="bench-zoom-label">画布缩放 <input id="bench-zoom" type="range" min="65" max="175" step="5" value="100"></label></div>
+  <div class="bench-layout"><section class="bench-workspace"><div class="bench-instructions"><b id="bench-status"></b><p id="bench-hint" aria-live="polite"></p><div class="bench-wire-builder"><button id="bench-start-wire">高亮下一根线的起点</button><select id="bench-wire-from" aria-label="导线起点"><option value="">选择起点</option></select><span>→</span><select id="bench-wire-to" aria-label="导线终点"><option value="">选择终点</option></select><button id="bench-connect-wire">连接这两个端子</button></div><small>操作：点一个金色端子，再点另一个端子；或在上方选两端连接。点导线可拆除。放大后仍可查看全部引脚。</small></div>
+  <div class="bench-workstation"><div id="bench-scene" class="bench-scene"></div><aside class="bench-grow-panel"><div class="section-index">接线 → 信号 → 程序 → 种菜机</div><div id="bench-grow-view"></div><div class="bench-environment"><label>环境温度 °C<input id="bench-env-temp" type="number" min="-20" max="60" value="29"></label><label>湿度 %<input id="bench-env-rh" type="number" min="0" max="100" value="60"></label><label>光照 lx<input id="bench-env-lux" type="number" min="0" max="60000" value="500"></label><label><input id="bench-env-low" type="checkbox">储液箱低液位</label></div><button id="bench-project-run" class="primary">接好后，运行种菜机 2 秒</button><p id="bench-project-note">左侧为本课练习电路，其余项目模块视为已安装。运行会使用原项目 C 控制器。</p></aside></div>
+    <div class="bench-scope-controls"><b>示波器</b><label>时基 <select id="bench-time"><option value="5">5 μs/div</option><option value="20">20 μs/div</option><option value="50">50 μs/div</option><option value="100">100 μs/div</option><option value="1000">1 ms/div</option><option value="5000">5 ms/div</option><option value="100000">100 ms/div</option></select></label><label>垂直 <select id="bench-volts"><option value="0.5">0.5 V/div</option><option value="1">1 V/div</option><option value="2">2 V/div</option><option value="5">5 V/div</option></select></label><label><input id="bench-ch1" type="checkbox" checked>CH1</label><label><input id="bench-ch2" type="checkbox" checked>CH2</label><button id="bench-switch" hidden>切换液位</button><button id="bench-network" hidden>切换网络</button></div>
+    <div class="bench-transport"><button id="bench-play" class="primary">▶ 运行并跟随代码</button><button id="bench-prev">← 上一步</button><button id="bench-next">下一步 →</button><span id="bench-step-count"></span></div>
+    <div id="bench-options" class="bench-options"></div><p class="bench-boundary">理想数字信号教学模型：可见动画经过减速，示波器按标注时基显示信号。此处不编译 HAL、不运行真实 FreeRTOS，也不计算电气瞬态。原 C 控制实验在主页面运行。</p>
+    <details class="bench-wire-details"><summary>查看已连接导线 / 点击拆线</summary><div id="bench-wire-list"></div></details>
+  </section><aside class="bench-study"><div class="bench-study-card"><span class="section-index">01 / 按顺序搭建</span><p id="bench-goal"></p><ol id="bench-steps"></ol><details id="bench-practice"></details></div>
+    <div class="bench-study-card"><span class="section-index">课程笔记 / 从基本原理到设计逻辑</span><div id="bench-guide"></div></div>
+    <div class="bench-study-card"><span class="section-index">02 / 看引脚，查说明书</span><div id="bench-pin-info"></div></div>
+    <div class="bench-study-card bench-source-card"><span class="section-index">03 / 程序运行到这里</span><div id="bench-code-file"></div><div id="bench-code" class="code-view" tabindex="0" aria-label="当前实验步骤的源代码"></div><p id="bench-caption"></p><div id="bench-values"></div><div id="bench-memory"></div></div>
+    <div class="bench-study-card bench-course-links"><span class="section-index">04 / 对照课程，再回项目</span><p>江协课程用于建立 GPIO、定时器、通信等基础。这里使用项目的 STM32F407 / HAL；寄存器、复用号与库函数要按本芯片核对。DHT11、FreeRTOS 和 MQTT 等标记为项目拓展，不冒充原视频章节。</p><a href="https://www.jiangxiekeji.com/tutorial/32.html" target="_blank" rel="noopener">江协 STM32 入门官方课程 ↗</a><button id="bench-theory">展开内部结构与逐步原理</button></div>
+  </aside></div>
+</dialog>
+<dialog id="bench-package" aria-labelledby="bench-package-title"><header><div><span class="eyebrow">PACKAGE / 引脚与内部结构</span><h2 id="bench-package-title">STM32F407VG · 100 个封装引脚</h2></div><button id="bench-package-close">返回接线台 ×</button></header><p id="bench-package-selected">点击任意引脚查看说明；返回接线台可读完整手册解释。</p><div id="bench-package-drawing"></div><p>金色排针是开发板连接点；此图编号是芯片封装脚号，二者不是同一组编号。</p></dialog>
+<dialog id="curriculum-lab" aria-labelledby="learn-title">
+ <header class="learn-header"><div><span class="eyebrow">LEARN / WIRE / REASON · 江协基础 × 面经 × 种菜机</span><h2 id="learn-title">完整学习专题</h2><p id="learn-count"></p></div><button id="learn-close">返回实验台 ×</button></header>
+ <div class="learn-layout"><aside class="learn-navigation"><input id="learn-search" placeholder="搜索专题、DMA、题95…" aria-label="搜索专题"><select id="learn-chapter" aria-label="按章节筛选"></select><nav id="learn-list" aria-label="按学习顺序排列的专题"></nav></aside>
+ <main class="learn-content"><p id="learn-course" class="learn-course"></p><p id="learn-summary" class="learn-summary"></p><div class="learn-actions"><button id="learn-wire" class="primary">去接线，观察种菜机 →</button><button id="learn-native">进入原 C 对照实验 →</button><a id="learn-deep" href="study.html" hidden>项目做法、方案比较与面试追问</a><label><input id="learn-done" type="checkbox">我已完成本专题练习</label></div>
+ <section class="learn-theory"><h3>先理解，再动手</h3><div id="learn-principles"></div></section>
+ <section class="learn-simulator"><h3 id="learn-model-title"></h3><p id="learn-model-boundary"></p><form id="learn-form"><div id="learn-controls"></div><button type="submit">应用参数，重新推演</button></form><div class="learn-simulation-grid"><div class="learn-diagram"><div id="learn-values"></div><div id="learn-chart"></div><div id="learn-cells"></div><p id="learn-caption"></p></div><div id="learn-grow-view"></div></div><div class="learn-transport"><button id="learn-play" class="primary">▶ 运行模型</button><button id="learn-prev-step">← 单步</button><button id="learn-next-step">单步 →</button><span id="learn-position"></span></div><div id="learn-code-file"></div><div id="learn-code" class="code-view" tabindex="0"></div></section>
+ <section class="learn-exercise"><h3>本专题练习与分析</h3><div id="learn-exercises"></div><details id="learn-quiz"></details></section>
+ <details class="learn-source"><summary>本专题的项目源码 / 独立教学片段</summary><p id="learn-topic-file"></p><div id="learn-topic-code" class="code-view" tabindex="0"></div></details>
+ <section class="learn-evidence"><h3>关联面经与资料</h3><div id="learn-questions"></div><div id="learn-references"></div><p>面经题号对应公开回忆整理；延伸题和教学实验由本项目补充。150 个专题复用一组明确标注范围的模型，不代表 150 种完整芯片或整机仿真。</p></section><footer class="learn-actions"><button id="learn-previous">← 上一专题</button><button id="learn-next">下一专题 →</button></footer>
+ </main></div>
+</dialog>
+</body></html>

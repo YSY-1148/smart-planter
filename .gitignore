@@ -1,4 +1,5 @@
 .pio/
+_site/
 .deps/
 __pycache__/
 *.pyc

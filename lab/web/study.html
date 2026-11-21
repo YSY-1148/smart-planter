@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>青禾实验室 · 从第一步学起</title>
+<link rel="stylesheet" href="study.css"><link rel="stylesheet" href="beginner.css">
+<script src="browser-engine.js" defer></script><script src="lab-api.js" defer></script>
+<script src="board-models.js" defer></script><script src="learning-models.js" defer></script>
+<script src="curriculum-foundations.js" defer></script><script src="day2-topics.js" defer></script>
+<script src="interview-inovance.js" defer></script><script src="interview-companies-a.js" defer></script><script src="interview-companies-b.js" defer></script>
+<script src="beginner-lessons.js" defer></script><script src="beginner.js" defer></script><script src="study.js" defer></script>
+</head>
+<body data-view="beginner">
+<a class="skip" href="#content">跳到学习内容</a>
+<aside class="rail">
+ <a class="brand" href="index.html">禾 <span>青禾实验室<small>从代码到解释</small></span></a>
+ <div id="beginner-rail"><div class="rail-heading">入门路线 · 一次弄懂一件事</div><nav id="beginner-nav" aria-label="入门学习路线"></nav><div class="guide-rail-bottom"><p id="guide-progress-text">正在读取入门课程</p><progress id="guide-progress" value="0" max="12"></progress><button id="guide-export">导出入门记录</button><p id="guide-save-status">每一步自动保存</p></div></div>
+ <div id="deep-rail" hidden><div class="rail-heading">项目深读 · 专题 17–64</div><nav id="blocks" aria-label="专题深读路线"></nav><div class="rail-bottom"><p id="progress-text">正在读取课程</p><progress id="progress" value="0" max="48"></progress><button id="export-notes">导出学习记录</button><a href="index.html">返回种菜机实验台</a></div></div>
+</aside>
+<div class="page">
+ <header class="top"><div><span class="eyebrow" id="study-eyebrow">青禾实验室 / 入门引导</span><h1 id="study-heading">先弄懂一件小事。</h1><p id="study-subtitle">从“风扇为什么转”开始，逐步认识引脚、时间和采样，最后再读项目。</p></div><div class="day-badge"><b id="study-badge">12 节小课</b><span id="study-badge-note">概念 · 小实验 · 一句代码</span></div></header>
+ <div id="notice" class="notice" role="status" hidden></div>
+ <p class="boundary" id="day-pace" hidden></p>
+ <div class="action-row" id="deep-resources" hidden><a href="downloads/day2-study-handbook.html" target="_blank" rel="noopener">离线入门与项目手册</a><a href="downloads/interview-handbook.html" target="_blank" rel="noopener">完整公司面试题库</a></div>
+ <div class="tabs" role="tablist" aria-label="学习模式"><button id="tab-beginner" role="tab" aria-selected="true" aria-controls="beginner-pane">从零开始</button><button id="tab-study" role="tab" aria-selected="false" aria-controls="study-pane">项目深读</button><button id="tab-interview" role="tab" aria-selected="false" aria-controls="interview-pane">公司面经与汇川专项</button><button id="tab-review" role="tab" aria-selected="false" aria-controls="review-pane">闭卷验收</button></div>
+ <main id="content">
+ <section id="beginner-pane" role="tabpanel" aria-labelledby="tab-beginner">
+  <div class="guide-heading"><div><span class="eyebrow" id="guide-lesson-position"></span><h2 id="guide-title"></h2><p id="guide-goal"></p></div><button id="guide-first">回到第一课</button></div>
+  <div id="guide-phases" class="guide-phases" aria-label="本课四个学习步骤"></div>
+  <article id="guide-content" class="guide-card"></article>
+  <p id="guide-return-hint" class="guide-navigation-hint"></p>
+  <div class="guide-navigation"><button id="guide-prev">返回上一步</button><button id="guide-next" class="primary">开始小实验</button><button id="guide-skip" hidden>暂时跳过，稍后补练</button></div>
+  <details class="guide-how"><summary>今天怎么安排？资料在哪里？</summary><p>先按入门路线建立概念。每课只做一个小实验、读少量代码，再用自己的话解释。看懂某一块后，可从课末进入相关专题深读。原 8 小时表作为复习参考，不要求初学者用同样速度掌握全部内容。</p><p>“记下这课”需要做过小实验、答对选择题并写下解释；“暂时跳过”不会计入完成。入门记录与原专题记录分别保存。</p><a href="downloads/day2-study-handbook.html" target="_blank" rel="noopener">离线阅读入门与项目手册</a></details>
+ </section>
+ <section id="study-pane" role="tabpanel" aria-labelledby="tab-study" hidden>
+  <div class="guide-deep-help"><p>读到陌生概念时，可以先回到入门小课。</p><button id="deep-to-beginner">先补本专题的入门知识</button></div>
+  <div class="block-banner"><div><span class="eyebrow" id="block-time"></span><h2 id="block-title"></h2><p id="block-deliverable"></p></div><button id="continue-topic" class="primary">继续未完成专题</button></div>
+  <div id="topic-list" class="topic-pills" aria-label="本阶段专题"></div>
+  <article id="topic-content"></article>
+ </section>
+ <section id="interview-pane" role="tabpanel" aria-labelledby="tab-interview" hidden>
+  <div class="block-banner"><div><span class="eyebrow">公开候选人回忆 · 检索于 2026-11-20</span><h2>用项目接住连续追问</h2><p id="bank-stats"></p></div><button id="inovance-only" class="primary">汇川专项</button></div>
+  <p class="boundary">面经证明“作者报告被问过”，不代表官方题库或必考。原帖改写与自主设计的追问分开标注；汇川集团与联合动力合并计数。覆盖范围以本次已检索来源为准，不宣称穷尽全部历史面试。</p>
+  <div class="bank-filters"><label>公司<select id="company-filter"></select></label><label>证据类型<select id="evidence-filter"><option value="all">全部</option><option value="reported">面经主题改写</option><option value="practice">项目迁移练习</option></select></label><label>范围<select id="scope-filter"><option value="all">全部方向</option><option value="today">关联今日专题</option></select></label><label class="search-label">关键词<input id="question-search" type="search" placeholder="PWM、为什么、ADC、故障…"></label></div>
+  <div id="company-summary"></div><div class="bank-actions"><p id="question-count" aria-live="polite"></p><button id="export-bank">下载当前筛选题库</button></div><div id="interview-questions"></div>
+ </section>
+ <section id="review-pane" role="tabpanel" aria-labelledby="tab-review" hidden>
+  <div class="block-banner"><div><span class="eyebrow">先回答，再看参考</span><h2>检验你能否独立说明</h2><p>抽取今日专题，按“事实 → 原因 → 取舍 → 证据”口述。打分是自评，不是自动能力认证。</p></div><button id="review-next" class="primary">换一道题</button></div>
+  <div class="card" id="review-card"></div><div class="card"><h3>今日交付物</h3><div id="deliverables"></div><p id="review-summary"></p></div>
+ </section>
+ </main>
+ <footer>本地学习记录保存在当前浏览器。原 C 实验执行控制核心；外设演示为教学模型。测量值不等同于真实开发板结果。</footer>
+</div>
+</body></html>
