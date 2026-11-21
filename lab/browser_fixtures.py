@@ -1,5 +1,6 @@
 """Native-C reference results for checking the browser clock and Wasm adapter."""
 import argparse
+from copy import deepcopy
 import json
 from pathlib import Path
 import random
@@ -13,7 +14,7 @@ def generate(output):
         snap=sim.action(action)
         keys=['state','inputs','elapsed','lesson','step_index','command','frame','layout','alarms']
         if trace: keys.append('trace')
-        actions.append(dict(action=action,expected={k:snap[k] for k in keys}))
+        actions.append(deepcopy(dict(action=action,expected={k:snap[k] for k in keys})))
     for lesson in LESSONS:
         record({'action':'lesson','id':lesson['id']})
         for step in lesson['steps']: record({'action':'experiment'},True)
